@@ -16,13 +16,16 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 import os
+import gi
 
 import logging
 from gettext import gettext as _
-
+gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk
+gi.require_version('Gdk', '3.0')
 from gi.repository import Gdk
 from gi.repository import GLib
+gi.require_version('Vte', '2.91')
 from gi.repository import Vte
 from gi.repository import Pango
 import dbus
@@ -112,7 +115,7 @@ class VncLauncherActivity(activity.Activity):
     def stopVNC(self, button):
 
         cmd = "\x03"  # Ctrl+C
-        self._vte.feed_child(cmd, -1)
+        self._vte.feed_child(cmd)
 
     def connectVNC(self, button):
         self._vte.grab_focus()
@@ -131,10 +134,10 @@ class VncLauncherActivity(activity.Activity):
                 else:
                     path = os.path.join(activity.get_bundle_path(), 'bin/x86')
             self._vte.feed_child(
-                "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:%s/lib\n" % path, -1)
+                "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:%s/lib\n" % path)
             cmd = os.path.join(path, 'x11vnc') + "\n"
             logging.error('Using %s', cmd)
-        self._vte.feed_child(cmd, -1)
+        self._vte.feed_child(cmd)
 
     def __key_press_cb(self, window, event):
         return False
@@ -202,9 +205,13 @@ class VTE(Vte.Terminal):
         else:
             bg_color = '#FFFFFF'
             conf.set('terminal', 'bg_color', bg_color)
-        self.set_colors(Gdk.color_parse(fg_color),
-                        Gdk.color_parse(bg_color),
-                        [])
+            try:
+                self.set_colors(Gdk.color_parse(fg_color),
+                                 Gdk.color_parse(bg_color),
+                                 [])
+            except TypeError:
+                self.set_colors(Gdk.RGBA(*Gdk.color_parse(fg_color).to_floats()),
+                          Gdk.RGBA(*Gdk.color_parse(bg_color).to_floats()),[])
 
         if conf.has_option('terminal', 'cursor_blink'):
             blink = conf.getboolean('terminal', 'cursor_blink')
@@ -244,19 +251,21 @@ class VTE(Vte.Terminal):
             conf.set('terminal', 'scroll_on_output', scroll_output)
         self.set_scroll_on_output(scroll_output)
 
-        if conf.has_option('terminal', 'emulation'):
-            emulation = conf.get('terminal', 'emulation')
-        else:
-            emulation = 'xterm'
-            conf.set('terminal', 'emulation', emulation)
-        self.set_emulation(emulation)
+        if hasattr(self, 'set_emulation'):
+            if conf.has_option('terminal', 'emulation'):
+                emulation = conf.get('terminal', 'emulation')
+            else:
+                emulation = 'xterm'
+                conf.set('terminal', 'emulation', emulation)
+            self.set_emulation(emulation)
 
-        if conf.has_option('terminal', 'visible_bell'):
-            visible_bell = conf.getboolean('terminal', 'visible_bell')
-        else:
-            visible_bell = False
-            conf.set('terminal', 'visible_bell', visible_bell)
-        self.set_visible_bell(visible_bell)
+        if hasattr(self, 'set_visible_bell'):    
+            if conf.has_option('terminal', 'visible_bell'):
+                visible_bell = conf.getboolean('terminal', 'visible_bell')
+            else:
+                visible_bell = False
+                conf.set('terminal', 'visible_bell', visible_bell)
+            self.set_visible_bell(visible_bell)
         conf.write(open(conf_file, 'w'))
 
     def on_gconf_notification(self, client, cnxn_id, entry, what):
