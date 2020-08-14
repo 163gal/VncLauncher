@@ -157,7 +157,7 @@ class VncLauncherActivity(activity.Activity):
                 logging.debug("Installing x11vnc")
                 if platform.version().find("Ubuntu") > -1 or platform.version().find("Debian") > -1:
                     cmd = "apt install x11vnc"
-                if platform.platform().find("Fedora") > -1:
+                if platform.platform().find("fedora") > -1:
                     cmd = "dnf install x11vnc"
                 self._vte.feed_child(cmd.encode('utf-8'))
             dialog.destroy()
