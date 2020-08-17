@@ -1,6 +1,6 @@
 [Activity]
 name = VncLauncher
-activity_version = 7
+activity_version = 8
 bundle_id = org.laptop.VncLauncher
 exec = sugar-activity3 vnclauncher.VncLauncherActivity
 icon = activity-vnclauncher
