@@ -1,0 +1,23 @@
+v8
+
+* Create pot file (Jui Pradhan)
+* Change search string for platform to lowercase (Ibiam Chihurumnaya),
+* fix multiple IP addresses issue (Saumya Mishra),
+* Fix exit of vte (Saumya Mishra),
+* Fix Vte Focus (Saumya Mishra),
+* Update method names and arguments (Saumya Mishra),
+* flake8 fix (Saumya Mishra),
+* Add a warning for missing dependency (Saumya Mishra),
+* Remove embedded x11vnc binaries (Saumya Mishra),
+* Remove jarabe.model.network (Saumya Mishra),
+* Fix other errors (Saumya Mishra),
+* fix feed_child type-error (Saumya Mishra),
+* Port to python3 (Saumya Mishra),
+* Complete port to Gtk+3 (Saumya Mishra),
+* Create and update README.md (Mayank Singh, James Cameron),
+* Fix missing library (Ezequiel Pereira),
+* Support for VTE 2.90 and 2.91 (Ezequiel Pereira),
+* Port to Gtk+3 (Ezequiel Pereira)
+
+v7
+
