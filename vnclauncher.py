@@ -45,39 +45,48 @@ _NM_DEVICE_IFACE = 'org.freedesktop.NetworkManager.Device'
 
 class VncLauncherActivity(activity.Activity):
 
+    
     def _ipaddr_(self, button):
         self.ipbutton = button
-        RetMyIPs = subprocess.check_output(['hostname', '-s', '-I']).decode('utf-8')[:-1]
-        myhostname = subprocess.check_output(['hostname']).decode('utf-8')
-        total_IPs = RetMyIPs.split()
-        IPs = "\n".join(total_IPs)
-        if RetMyIPs != "0.0.0.0" and RetMyIPs != "127.0.0.1":
-            logging.debug("Found IP Addresses")
-            dialog = Gtk.MessageDialog(
-                transient_for=self,
-                flags=0,
-                message_type=Gtk.MessageType.INFO,
-                buttons=Gtk.ButtonsType.OK,
-                text="IP Addresses"
-            )
-            dialog.format_secondary_text(
-                 IPs + '\n\n'+
-                "Your Hostname is " + myhostname
-            )
-            response = dialog.run()
+        try:
+            short_hostname = subprocess.check_output(['hostname', '-s']).decode('utf-8').strip()
+            ip_address = subprocess.check_output(['hostname', '-i']).decode('utf-8').strip()
+            RetMyIPs = f"{short_hostname} {ip_address}"
+            myhostname = subprocess.check_output(['hostname']).decode('utf-8').strip()
+            total_IPs = RetMyIPs.split()
+            IPs = "\n".join(total_IPs)
+            if ip_address != "0.0.0.0" and ip_address != "127.0.0.1":
+                logging.debug("Found IP Addresses")
+                dialog = Gtk.MessageDialog(
+                    transient_for=self,
+                    flags=0,
+                    message_type=Gtk.MessageType.INFO,
+                    buttons=Gtk.ButtonsType.OK,
+                    text="IP Addresses"
+                )
+                dialog.format_secondary_text(
+                    IPs + '\n\n' +
+                    "Your Hostname is " + myhostname
+                )
+                response = dialog.run()
 
-            if response == Gtk.ResponseType.OK:
-                logging.debug("Got IP Addresses")
+                if response == Gtk.ResponseType.OK:
+                    logging.debug("Got IP Addresses")
+                    self.ipbutton.set_label(
+                        'Please Click to find current IP address')
+                dialog.destroy()
+
+            else:
                 self.ipbutton.set_label(
-                    'Please Click to find current IP address')
-            dialog.destroy()
-
-        else:
+                    'Please Click to find current IP address \n\n' +
+                    'Error!! check connection'
+                )
+        except subprocess.CalledProcessError as e:
+            logging.error(f"Error retrieving IP address: {e}")
             self.ipbutton.set_label(
                 'Please Click to find current IP address \n\n' +
                 'Error!! check connection'
             )
-
 
     def __init__(self, handle):
         activity.Activity.__init__(self, handle)
@@ -202,9 +211,8 @@ class VTE(Vte.Terminal):
         conf_file = os.path.join(env.get_profile_path(), 'terminalrc')
 
         if os.path.isfile(conf_file):
-            f = open(conf_file, 'r')
-            conf.readfp(f)
-            f.close()
+            with open(conf_file, 'r') as f:
+                conf.read_file(f)
         else:
             conf.add_section('terminal')
 
@@ -282,7 +290,8 @@ class VTE(Vte.Terminal):
                 visible_bell = 'False'
                 conf.set('terminal', 'visible_bell', visible_bell)
             self.set_visible_bell(visible_bell)
-        conf.write(open(conf_file, 'w'))
+        with open(conf_file, 'w') as f:
+            conf.write(f)
 
     def on_gconf_notification(self, client, cnxn_id, entry, what):
         self.reconfigure_vte()
